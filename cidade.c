@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 #include <float.h>
+#include <stdbool.h>
 
 void conectarCidades (Cidade *origem, Cidade *destino, int distancia){
     int i = origem->num_vizinhos;
@@ -249,3 +250,76 @@ void garantir_grafo_conexo(CidadeGrid *grid, int tam) {
     free(visitado);
     free(fila);
 }
+
+//Aqui vai consultar se todas as cidades ja passou no back
+int is_a_solution(int k, int total_cidade){
+    return (k == total_cidade - 1);
+}
+
+int ja_visitou(int *a, int k, int id_cidade){
+    for(int i = 0;i<=k; i++){
+        if(a[i] == id_cidade){
+            return 1;
+        }
+    }
+    return 0;
+ }
+void process_solution(int *a, int k, CidadeGrid *grid) {
+    printf("\nCaminho: ");
+    for (int i = 0; i <= k; i++) {
+        printf("%s", grid[a[i]].cidade.nome);
+        if (i < k) {
+            printf(" -> ");
+        }
+    }
+    printf("\n");
+}
+
+ /**
+ * Teremos um vetor pra guardar os vizinhos, nCandidates pra somar os vizinhos válidos
+ *Se já tiver passado em todas as cidades, vai dar o print do caminho percorrido
+ *Na primeira passagem k sempre será 0, pois passamos o valor de -1 no main
+ *Fizemos isso, pois como poderia começar a analisar de qualquer lugar, torna-se obrigatorio começar do 0
+ *O loop funciona pra resolver um B.O que tivemos, pois não retornava nenhum caminho, como se entrasse numa rua sem saída
+ *faço ponterio anterior do tipo cidade, aqui salvamos os vizinhos validos (os que nao foram visitados)
+ *finaliza com a recursao propria do back
+ */
+
+
+ bool finished = false;
+
+ void backtrack(int *a, int k, CidadeGrid *grid, int total_cidade){
+    int c[MAX_VIZINHOS];
+    int nCandidates = 0;
+    if(is_a_solution(k, total_cidade)){
+            process_solution(a, k, grid);
+            finished = true;
+    }
+    else{
+        k = k+1;
+        if(k==0){
+        for (int i = 0; i < total_cidade; i++) {
+            c[nCandidates] = i;
+            nCandidates++;
+    }
+        }
+        else{
+            int id_anterior = a[k-1];
+            Cidade *anterior = &grid[id_anterior].cidade;
+            for(int i=0; i < anterior->num_vizinhos;i++){
+                int id_vizinho = anterior->vizinhos[i]->id;
+                if(!ja_visitou(a, k, id_vizinho)){
+                    c[nCandidates] = id_vizinho;
+                    nCandidates++;
+                }
+            }
+        }
+    for(int i=0;i<nCandidates;i++){
+            a[k] = c[i];
+            backtrack(a,k, grid, total_cidade);
+            if(finished){
+                return;
+            }
+        }
+    }
+ }
